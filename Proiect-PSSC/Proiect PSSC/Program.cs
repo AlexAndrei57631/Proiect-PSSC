@@ -14,6 +14,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<PlaceOrderWorkflow>();
+builder.Services.AddTransient<PublishInvoiceWorkflow>(); 
 
 var app = builder.Build();
 
