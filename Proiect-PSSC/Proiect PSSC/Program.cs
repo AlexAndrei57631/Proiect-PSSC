@@ -14,6 +14,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<PlaceOrderWorkflow>();
+builder.Services.AddTransient<GenerateInvoiceWorkflow>();
+builder.Services.AddTransient<DeliverOrderWorkflow>();
 
 var app = builder.Build();
 
@@ -29,6 +31,8 @@ else
     app.UseHsts();
 }
 
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
