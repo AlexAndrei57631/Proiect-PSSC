@@ -1,50 +1,26 @@
-using Domain.Models.Entities;
 using System;
 using System.Collections.Generic;
+using Domain.Models.Entities;
 
 namespace Domain.Events
 {
     public static class OrderDeliveredEvent
     {
-        // Interface marker
         public interface IOrderDeliveredEvent { }
 
-        // Success event
-        public record OrderDeliveredSucceededEvent : IOrderDeliveredEvent
-        {
-            public string Csv { get; }
-            public DateTime DeliveredDate { get; }
-            public DeliveredShipment Shipment { get; }
+        public record OrderDeliveredSucceededEvent(DeliveredShipment Shipment, DateTime DeliveredDate, string Csv) : IOrderDeliveredEvent;
 
-            internal OrderDeliveredSucceededEvent(DeliveredShipment shipment, DateTime deliveredDate)
-            {
-                Shipment = shipment;
-                DeliveredDate = deliveredDate;
-                Csv = $"{shipment.OrderId},{shipment.CustomerId},{shipment.TrackingNumber},{shipment.DeliveredAt}";
-            }
-        }
+        public record OrderDeliveredFailedEvent(IReadOnlyCollection<string> Reasons) : IOrderDeliveredEvent;
 
-        // Failure event
-        public record OrderDeliveredFailedEvent : IOrderDeliveredEvent
-        {
-            public IEnumerable<string> Reasons { get; }
-
-            internal OrderDeliveredFailedEvent(IEnumerable<string> reasons)
-            {
-                Reasons = reasons;
-            }
-        }
-
-        // Extension method - THIS IS SARCINA 3.3!
         public static IOrderDeliveredEvent ToEvent(this IShipment shipment) => shipment switch
         {
-            // Success path
-            DeliveredShipment deliveredShipment => new OrderDeliveredSucceededEvent(deliveredShipment, DateTime.Now),
+            DeliveredShipment delivered => new OrderDeliveredSucceededEvent(
+                delivered,
+                delivered.DeliveredAt,
+                $"{delivered.TrackingNumber},{delivered.OrderId.Value},{delivered.RecipientName}"),
 
-            // Failure paths
-            InvalidShipment invalidShipment => new OrderDeliveredFailedEvent(invalidShipment.Reasons),
+            InvalidShipment invalid => new OrderDeliveredFailedEvent(invalid.Reasons),
 
-            // Unexpected states
             _ => new OrderDeliveredFailedEvent(new[] { $"Unexpected state: {shipment.GetType().Name}" })
         };
     }

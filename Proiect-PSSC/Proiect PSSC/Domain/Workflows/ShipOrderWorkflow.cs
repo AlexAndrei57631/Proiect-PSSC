@@ -1,16 +1,16 @@
-﻿using System;
-using Domain.Models.Commands;
+﻿using Domain.Models.Commands;
 using Domain.Models.Entities;
 using Domain.Operations;
-using Domain.Operations.Shipment; // Namespace-ul unde ai pus DeliverShipmentOperation
-using static Domain.Events.OrderDeliveredEvent;
+using Domain.Operations.Shipment; // Asigură-te că namespace-ul este corect
+using static Domain.Events.OrderDeliveredEvent; // Schimbat din ShipmentDeliveredEvent
+using System;
 
 namespace Domain.Workflows
 {
-    public class DeliverOrderWorkflow
+    public class ShipOrderWorkflow
     {
-        public IOrderDeliveredEvent Execute(
-            DeliverOrderCommand command,
+        public IOrderDeliveredEvent Execute( // Schimbat din IShipmentDeliveredEvent
+            ShipOrderCommand command,
             Func<string, bool> checkOrderExists,
             Func<string, bool> checkCustomerExists,
             Func<string, bool> checkProductExists,
@@ -20,24 +20,17 @@ namespace Domain.Workflows
             Func<string, string> getRecipientName
         )
         {
-            // Start: Unvalidated
             IShipment shipment = command.InputShipment;
 
-            // Operația 1: Validare (Unvalidated -> Validated)
             shipment = new ValidateShipmentOperation(checkOrderExists, checkCustomerExists, checkProductExists)
                 .Transform(shipment);
 
-            // Operația 2: Pregătire (Validated -> Prepared)
-            // Notă: Folosim dependințele cerute de constructorul tău din PrepareShipmentOperation
             shipment = new PrepareShipmentOperation(generateTrackingNumber, assignCarrier)
                 .Transform(shipment);
 
-            // Operația 3: Livrare (Prepared -> Delivered)
-            // Notă: Folosim dependințele cerute de constructorul tău din DeliverShipmentOperation
             shipment = new DeliverShipmentOperation(confirmDelivery, getRecipientName)
                 .Transform(shipment);
 
-            // Final: Convertire în Event (Succes sau Fail)
             return shipment.ToEvent();
         }
     }
